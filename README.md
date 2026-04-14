@@ -138,8 +138,8 @@ mobile_app/
 ### Backend
 ```bash
 cd backend
-cp .env.example .env
 npm install
+npm run setup
 npm run dev
 ```
 
@@ -158,7 +158,7 @@ See `backend/.env.example`:
 - `PORT`
 - `MONGO_URI`
 - `JWT_SECRET`
-- `CLIENT_URL`
+- `CORS_ORIGINS` (comma-separated allowed origins)
 - `RAZORPAY_KEY_ID`
 - `RAZORPAY_KEY_SECRET`
 - `REDIS_URL`

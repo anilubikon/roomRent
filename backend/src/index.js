@@ -12,8 +12,9 @@ async function bootstrap() {
   const server = http.createServer(app);
   const io = new Server(server, {
     cors: {
-      origin: env.clientUrl,
+      origin: env.corsOrigins,
       methods: ['GET', 'POST'],
+      credentials: true,
     },
   });
 
@@ -24,7 +25,7 @@ async function bootstrap() {
   }
 
   server.listen(env.port, () => {
-    console.log(`Server running on port ${env.port}`);
+    console.log(`Server running on port ${env.port} (${env.nodeEnv})`);
   });
 }
 
