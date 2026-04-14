@@ -7,7 +7,7 @@ export const razorpayClient = new Razorpay({
 });
 
 export function splitPayment(totalAmount, companyMarginPercent = 5) {
-  const companyAmount = Math.round((totalAmount * companyMarginPercent) / 100);
-  const ownerPayoutAmount = totalAmount - companyAmount;
-  return { companyAmount, ownerPayoutAmount };
+  const commissionAmount = Math.round((totalAmount * companyMarginPercent) / 100);
+  const ownerPayoutAmount = totalAmount - commissionAmount;
+  return { commissionAmount, ownerPayoutAmount };
 }
