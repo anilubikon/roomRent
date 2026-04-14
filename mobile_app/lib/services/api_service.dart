@@ -1,29 +1,41 @@
 import 'package:dio/dio.dart';
 
 class ApiService {
-  final Dio dio;
-
   ApiService(String baseUrl)
       : dio = Dio(BaseOptions(baseUrl: baseUrl, headers: {'Content-Type': 'application/json'}));
 
-  Future<List<dynamic>> searchListings({String? city, String? suitableFor}) async {
-    final response = await dio.get('/api/listings', queryParameters: {
-      if (city != null) 'city': city,
-      if (suitableFor != null) 'suitableFor': suitableFor,
-    });
+  final Dio dio;
 
+  Future<List<dynamic>> getProperties({Map<String, dynamic>? filters}) async {
+    final response = await dio.get('/api/properties', queryParameters: filters);
     return response.data as List<dynamic>;
+  }
+
+  Future<Map<String, dynamic>> sendOtp(String phone) async {
+    final response = await dio.post('/api/auth/send-otp', data: {'phone': phone});
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> verifyOtp({required String phone, required String otp}) async {
+    final response = await dio.post('/api/auth/verify-otp', data: {'phone': phone, 'otp': otp});
+    return response.data as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> createPaymentOrder({
     required String token,
-    required String listingId,
     required double amount,
-    required String planType,
+    required String type,
+    String? bookingId,
+    String planType = 'full',
   }) async {
     final response = await dio.post(
       '/api/payments/order',
-      data: {'listingId': listingId, 'amount': amount, 'planType': planType},
+      data: {
+        'bookingId': bookingId,
+        'amount': amount,
+        'type': type,
+        'planType': planType,
+      },
       options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
 

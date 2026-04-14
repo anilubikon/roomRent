@@ -2,52 +2,53 @@ import crypto from 'crypto';
 import { StatusCodes } from 'http-status-codes';
 import { z } from 'zod';
 import { env } from '../config/env.js';
+import { Booking } from '../models/Booking.js';
 import { Payment } from '../models/Payment.js';
 import { User } from '../models/User.js';
 import { razorpayClient, splitPayment } from '../services/razorpayService.js';
 
 const createOrderSchema = z.object({
-  listingId: z.string().min(1),
+  bookingId: z.string().optional(),
   amount: z.number().positive(),
-  planType: z.enum(['full', 'emi']),
+  type: z.enum(['rent', 'wallet_topup', 'loan_repayment']),
+  planType: z.enum(['full', 'emi']).default('full'),
 });
 
 export async function createPaymentOrder(req, res) {
   const payload = createOrderSchema.parse(req.body);
   const user = await User.findById(req.user.userId);
+  const booking = payload.bookingId ? await Booking.findById(payload.bookingId) : null;
 
   const order = await razorpayClient.orders.create({
     amount: Math.round(payload.amount * 100),
     currency: 'INR',
     notes: {
-      listingId: payload.listingId,
+      bookingId: payload.bookingId ?? '',
       userId: req.user.userId,
+      paymentType: payload.type,
       planType: payload.planType,
     },
   });
 
-  const { companyAmount, ownerPayoutAmount } = splitPayment(
+  const { commissionAmount, ownerPayoutAmount } = splitPayment(
     payload.amount,
     user?.companyMarginPercent || 5
   );
 
   const payment = await Payment.create({
-    userId: req.user.userId,
-    listingId: payload.listingId,
+    bookingId: booking?._id,
+    tenantId: req.user.userId,
+    ownerId: booking?.ownerId,
+    type: payload.type,
     planType: payload.planType,
     totalAmount: payload.amount,
-    paidAmount: 0,
-    companyAmount,
+    commissionAmount,
     ownerPayoutAmount,
     razorpayOrderId: order.id,
     status: 'created',
   });
 
-  return res.status(StatusCodes.CREATED).json({
-    order,
-    payment,
-    keyId: env.razorpayKeyId,
-  });
+  return res.status(StatusCodes.CREATED).json({ order, payment, keyId: env.razorpayKeyId });
 }
 
 const verifySchema = z.object({
@@ -84,4 +85,9 @@ export async function verifyPayment(req, res) {
   }
 
   return res.status(StatusCodes.OK).json({ success: true, payment });
+}
+
+export async function listMyPayments(req, res) {
+  const payments = await Payment.find({ tenantId: req.user.userId }).sort({ createdAt: -1 });
+  return res.status(StatusCodes.OK).json(payments);
 }
