@@ -9,4 +9,6 @@ export const env = {
   razorpayKeyId: process.env.RAZORPAY_KEY_ID || '',
   razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || '',
   clientUrl: process.env.CLIENT_URL || '*',
+  redisUrl: process.env.REDIS_URL || '',
+  enableDemoJobs: process.env.ENABLE_DEMO_JOBS === 'true',
 };

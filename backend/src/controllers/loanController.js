@@ -1,37 +1,35 @@
 import { StatusCodes } from 'http-status-codes';
 import { z } from 'zod';
-import { Loan } from '../models/Loan.js';
+import { RentHelpCredit } from '../models/RentHelpCredit.js';
 
-const applyLoanSchema = z.object({
+const simulateRentHelpSchema = z.object({
   principal: z.number().positive(),
-  interestRateAnnual: z.number().min(1),
+  convenienceFeePercent: z.number().min(0).max(10).default(2),
   tenureMonths: z.number().int().min(1),
-  bookingId: z.string().optional(),
 });
 
-function calculateEmi(principal, annualRate, months) {
-  const monthlyRate = annualRate / 1200;
-  const factor = (1 + monthlyRate) ** months;
-  return Math.round((principal * monthlyRate * factor) / (factor - 1));
+function calculateEmi(principal, months) {
+  return Number((principal / months).toFixed(2));
 }
 
 export async function applyLoan(req, res) {
-  const payload = applyLoanSchema.parse(req.body);
-  const emiAmount = calculateEmi(payload.principal, payload.interestRateAnnual, payload.tenureMonths);
+  const payload = simulateRentHelpSchema.parse(req.body);
+  const fee = Number((payload.principal * (payload.convenienceFeePercent / 100)).toFixed(2));
+  const totalPayable = Number((payload.principal + fee).toFixed(2));
 
-  const loan = await Loan.create({
-    tenantId: req.user.userId,
-    bookingId: payload.bookingId,
+  const simulation = {
     principal: payload.principal,
-    interestRateAnnual: payload.interestRateAnnual,
+    convenienceFee: fee,
+    totalPayable,
     tenureMonths: payload.tenureMonths,
-    emiAmount,
-  });
+    emiAmount: calculateEmi(totalPayable, payload.tenureMonths),
+    message: 'Simulation only. Admin approval is required to disburse Rent Help credit.',
+  };
 
-  return res.status(StatusCodes.CREATED).json(loan);
+  return res.status(StatusCodes.OK).json(simulation);
 }
 
 export async function getMyLoans(req, res) {
-  const loans = await Loan.find({ tenantId: req.user.userId }).sort({ createdAt: -1 });
-  return res.status(StatusCodes.OK).json(loans);
+  const credits = await RentHelpCredit.find({ tenantId: req.user.userId }).sort({ createdAt: -1 });
+  return res.status(StatusCodes.OK).json(credits);
 }

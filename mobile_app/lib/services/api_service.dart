@@ -41,4 +41,59 @@ class ApiService {
 
     return response.data as Map<String, dynamic>;
   }
+
+  Future<Map<String, dynamic>> payRentFromWallet({
+    required String token,
+    required String bookingId,
+    required double amount,
+    double? cashAmount,
+    double? rentHelpAmount,
+  }) async {
+    final response = await dio.post(
+      '/api/payments/rent/wallet',
+      data: {
+        'bookingId': bookingId,
+        'amount': amount,
+        if (cashAmount != null || rentHelpAmount != null)
+          'split': {
+            'cashAmount': cashAmount ?? 0,
+            'rentHelpAmount': rentHelpAmount ?? 0,
+          },
+      },
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> getWallet(String token) async {
+    final response = await dio.get(
+      '/api/wallet',
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<List<dynamic>> getWalletTransactions(String token) async {
+    final response = await dio.get(
+      '/api/wallet/transactions',
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+
+    return response.data as List<dynamic>;
+  }
+
+  Future<Map<String, dynamic>> repayRentHelp({
+    required String token,
+    required String rentHelpCreditId,
+    required double amount,
+  }) async {
+    final response = await dio.post(
+      '/api/wallet/rent-help/repay',
+      data: {'rentHelpCreditId': rentHelpCreditId, 'amount': amount},
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+
+    return response.data as Map<String, dynamic>;
+  }
 }

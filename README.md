@@ -1,42 +1,107 @@
-# RentFlow - Full-Stack Rent Management App
+# RentFlow – RentTech + FinTech Super App (Flutter + Node.js)
 
-RentFlow is a startup-grade RentTech + FinTech platform scaffold built with:
-- **Flutter** (mobile frontend)
-- **Node.js + Express + MongoDB** (backend)
-- **Socket.io** (real-time chat + WebRTC signaling)
-- **Razorpay** (payments)
+Startup-grade reference implementation for a rental marketplace + closed-loop Rent Help wallet.
 
-## Modules Delivered
+## Tech Stack
 
-### Frontend (Flutter)
-- Splash
-- OTP Login / Signup
-- Home with module navigation
-- Property Listing
-- Property Detail
-- Add Property
-- Chat
-- Video Call
-- Wallet
-- Payment
-- Loan / EMI
-- User Profile
-- Owner Dashboard
-- Booking / Rent History
-- Notifications
+### Mobile (Flutter)
+- Clean Architecture-ready feature modules
+- Dio API layer
+- Socket service for chat / signaling
+- Airbnb-style UI scaffold (light/dark capable)
 
-### Backend (Express + MongoDB)
-- JWT Auth
-- OTP auth endpoints
-- Role-based access (tenant/owner/agent/admin)
-- Property CRUD-oriented APIs (create/list/detail)
+### Backend (Node.js)
+- Node.js + Express + MongoDB (Mongoose)
+- Socket.io (chat + WebRTC signaling)
+- Razorpay order + signature verification
+- Role-based auth (tenant/owner/agent/admin)
+- Rent Help closed-loop wallet logic
+
+---
+
+## Core Business Features Implemented
+
+### 1) Rental Marketplace
+- Property listing and details
 - Booking APIs
-- Wallet APIs
-- Loan APIs (EMI calculation)
-- Payment APIs (Razorpay order + verification)
-- Chat history APIs
-- Notification APIs
-- Socket events for chat + WebRTC signaling
+- Owner/agent property publish flow
+- Tenant booking and payment history
+
+### 2) Closed-Loop Wallet (Main USP)
+- Wallet split into:
+  - `cashBalance` (user top-up)
+  - `rentHelpBalance` (company-provided credit)
+- **No withdrawal endpoint** (closed-loop by design)
+- Rent payments can be settled using wallet split (cash + rent help)
+
+### 3) Rent Help (Pay Later, Non-Loan UX)
+- Admin grants credit (`₹5,000–₹50,000`)
+- Credit usable only for rent (wallet-restricted)
+- Full or EMI repayment mode
+- Installment schedule with late-fee tagging
+- Auto-block rent help on overdue/default
+
+### 4) Payment Mediation
+- Tenant pays platform (Razorpay or wallet)
+- Payment model stores commission + owner payout split
+- Razorpay webhook/signature-ready verification flow
+
+### 5) Realtime + Communication
+- Socket-based chat
+- WebRTC signaling channel events for video call setup
+
+---
+
+## Backend APIs
+
+### Auth
+- `POST /api/auth/send-otp`
+- `POST /api/auth/verify-otp`
+- `POST /api/auth/register`
+
+### Property + Booking
+- `GET /api/properties`
+- `GET /api/properties/:id`
+- `POST /api/properties`
+- `POST /api/bookings`
+- `GET /api/bookings/mine`
+
+### Wallet + Rent Help
+- `GET /api/wallet`
+- `GET /api/wallet/transactions`
+- `POST /api/wallet/topup`
+- `POST /api/wallet/rent-help/repay`
+- `POST /api/wallet/rent-help/grant` (admin only)
+
+### Payments
+- `POST /api/payments/order`
+- `POST /api/payments/verify`
+- `POST /api/payments/rent/wallet`
+- `GET /api/payments/mine`
+
+### Rent Help Insights
+- `POST /api/loans/apply` (simulation endpoint)
+- `GET /api/loans/mine` (returns user Rent Help credits)
+
+### Chat + Notifications
+- `GET /api/chat/:roomId/messages`
+- `GET /api/notifications`
+- `PATCH /api/notifications/:id/read`
+
+---
+
+## Data Models
+
+- `User`
+- `Property`
+- `Booking`
+- `Wallet`
+- `WalletTransaction`
+- `RentHelpCredit`
+- `Payment`
+- `ChatMessage`
+- `Notification`
+- `OtpCode`
 
 ---
 
@@ -45,8 +110,11 @@ RentFlow is a startup-grade RentTech + FinTech platform scaffold built with:
 ```txt
 backend/
   src/
+    app.js
+    index.js
     config/
     controllers/
+    jobs/
     middleware/
     models/
     routes/
@@ -55,17 +123,19 @@ backend/
 
 mobile_app/
   lib/
+    app.dart
     core/
-    navigation/
     features/
     models/
+    navigation/
     services/
 ```
 
 ---
 
-## Backend Setup
+## Local Setup
 
+### Backend
 ```bash
 cd backend
 cp .env.example .env
@@ -73,76 +143,43 @@ npm install
 npm run dev
 ```
 
-Required `.env` keys:
-- `PORT`
-- `MONGO_URI`
-- `JWT_SECRET`
-- `CLIENT_URL`
-- `RAZORPAY_KEY_ID`
-- `RAZORPAY_KEY_SECRET`
-
-### Backend API Overview
-
-#### Auth
-- `POST /api/auth/send-otp`
-- `POST /api/auth/verify-otp`
-- `POST /api/auth/register`
-
-#### Properties
-- `GET /api/properties`
-- `GET /api/properties/:id`
-- `POST /api/properties` (owner/agent/admin)
-
-#### Bookings
-- `POST /api/bookings`
-- `GET /api/bookings/mine`
-
-#### Wallet
-- `GET /api/wallet`
-- `POST /api/wallet/topup`
-
-#### Loans
-- `POST /api/loans/apply`
-- `GET /api/loans/mine`
-
-#### Payments
-- `POST /api/payments/order`
-- `POST /api/payments/verify`
-- `GET /api/payments/mine`
-
-#### Notifications
-- `GET /api/notifications`
-- `PATCH /api/notifications/:id/read`
-
-#### Chat
-- `GET /api/chat/:roomId/messages`
-
-Socket events:
-- `join_room`
-- `chat_message`
-- `webrtc_offer`
-- `webrtc_answer`
-- `webrtc_ice_candidate`
-
----
-
-## Flutter Setup
-
+### Flutter
 ```bash
 cd mobile_app
 flutter pub get
 flutter run
 ```
 
-Update base URLs in `ApiService` and socket base URL for your environment.
+---
+
+## Environment Variables
+
+See `backend/.env.example`:
+- `PORT`
+- `MONGO_URI`
+- `JWT_SECRET`
+- `CLIENT_URL`
+- `RAZORPAY_KEY_ID`
+- `RAZORPAY_KEY_SECRET`
+- `REDIS_URL`
+- `ENABLE_DEMO_JOBS`
 
 ---
 
-## Production Notes
+## Production Hardening Roadmap
 
-- Replace dev OTP (`123456`) with Firebase/MessageCentral provider.
-- Add Cloudinary/S3 for property images & videos.
-- Use Agenda.js + Redis for rent reminders and retry jobs.
-- Add webhook endpoint and signature verification hardening for Razorpay.
-- Add observability (Sentry + metrics) and CI/CD.
+1. Replace demo OTP with provider (Firebase/MSG91/Twilio Verify)
+2. Add KYC workflows (Aadhaar/PAN APIs + manual review)
+3. Introduce Agenda.js + Redis-backed job orchestration
+4. Add event bus + ledger for finance-grade wallet auditing
+5. Add Razorpay webhook ingestion with idempotency keys
+6. Add fraud detection pipeline (duplicate listings + abnormal transactions)
+7. Implement legal stack (PDF agreement + eSign)
+8. Add owner analytics dashboards and recommendation services
+9. Add CI/CD, SAST/DAST, observability and backup policies
 
+---
+
+## Notes
+
+This repository is a production-oriented scaffold with core rent + fintech rails implemented and extensible architecture for full startup rollout.
