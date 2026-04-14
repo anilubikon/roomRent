@@ -1,0 +1,2 @@
+// Placeholder file. Run `flutter create .` on a machine with Flutter SDK
+// to generate a complete Xcode project structure.

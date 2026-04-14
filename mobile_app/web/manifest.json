@@ -1,0 +1,9 @@
+{
+  "name": "room_rent_app",
+  "short_name": "room_rent_app",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2196f3",
+  "description": "Room rent app"
+}
