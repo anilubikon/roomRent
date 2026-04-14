@@ -3,6 +3,7 @@ import { Server } from 'socket.io';
 import { app } from './app.js';
 import { connectDb } from './config/db.js';
 import { env } from './config/env.js';
+import { startRentHelpJobRunner } from './jobs/rentHelpJobRunner.js';
 import { registerSocket } from './socket/socketServer.js';
 
 async function bootstrap() {
@@ -17,6 +18,10 @@ async function bootstrap() {
   });
 
   registerSocket(io);
+
+  if (env.enableDemoJobs) {
+    startRentHelpJobRunner();
+  }
 
   server.listen(env.port, () => {
     console.log(`Server running on port ${env.port}`);
