@@ -13,14 +13,27 @@ import loanRoutes from './routes/loanRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin || env.corsOrigins.includes('*') || env.corsOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+};
+
 export const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: env.clientUrl }));
+app.use(cors(corsOptions));
 app.use(morgan('dev'));
 app.use(express.json({ limit: '5mb' }));
 
-app.get('/health', (_, res) => res.json({ ok: true, service: 'room-rent-backend' }));
+app.get('/health', (_, res) =>
+  res.json({ ok: true, service: 'room-rent-backend', env: env.nodeEnv, corsOrigins: env.corsOrigins })
+);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/properties', propertyRoutes);
@@ -38,5 +51,5 @@ app.use((err, _req, res, _next) => {
   }
 
   console.error(err);
-  return res.status(500).json({ message: 'Internal server error' });
+  return res.status(500).json({ message: err.message || 'Internal server error' });
 });
